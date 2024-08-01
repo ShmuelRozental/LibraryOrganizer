@@ -1,0 +1,74 @@
+﻿@model LibraryOrganizer.Models.Book
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Book</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="Genre" class="control-label"></label>
+                <input asp-for="Genre" class="form-control" />
+                <span asp-validation-for="Genre" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Name" class="control-label"></label>
+                <input asp-for="Name" class="form-control" />
+                <span asp-validation-for="Name" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Height" class="control-label"></label>
+                <input asp-for="Height" class="form-control" />
+                <span asp-validation-for="Height" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Thickness" class="control-label"></label>
+                <input asp-for="Thickness" class="form-control" />
+                <span asp-validation-for="Thickness" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="ShelfId" class="control-label"></label>
+                <select asp-for="ShelfId" class ="form-control" asp-items="ViewBag.ShelfId"></select>
+            </div>
+            <div class="form-group form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" asp-for="IsPartOfSet" /> @Html.DisplayNameFor(model => model.IsPartOfSet)
+                </label>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+
+@if (this.ViewBag.WarningMessage != null)
+{
+    <div class="alert alert-warning">
+        @ViewBag.WarningMessage
+    </div>
+    
+        
+}
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+    @if (ViewBag.WarningMessage != null)
+    {
+        <script>
+            alert('@Html.Raw(ViewBag.WarningMessage)');
+        </script>
+    }
+}
