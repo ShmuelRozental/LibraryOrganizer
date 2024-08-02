@@ -23,6 +23,7 @@ namespace LibraryOrganizer.Models
 
         public ICollection<Book> Books { get; set; } = new List<Book>(); // Navigation property to Books ,ensures that it is never null
 
+
         // Calculate remaining space on the shelf
         public int RemainingSpace()
         {

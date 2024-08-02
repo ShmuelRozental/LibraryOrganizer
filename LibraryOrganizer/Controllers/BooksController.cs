@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using LibraryOrganizer.Data;
@@ -72,26 +68,15 @@ namespace LibraryOrganizer.Controllers
                     return View(book);
                 }
 
-                // Check if the book fits the shelf height
-                if (book.Height > shelf.Height)
+                /// Check if the book fits the shelf height
+                // and if the combined thickness of books on the shelf fits within the shelf width
+                if (!shelf.CanAddBook(book))
                 {
-                    ModelState.AddModelError("", "Book height exceeds shelf height.");
+                    ModelState.AddModelError("", "The book cannot fit on the shelf due to height or width constraints.");
                     ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
                     return View(book);
                 }
 
-             
-
-                // Check if the combined thickness of books on the shelf fits within the shelf width
-                double totalThickness = shelf.Books.Sum(b => b.Thickness) + book.Thickness;
-                if (totalThickness > shelf.Width)
-                {
-                    ModelState.AddModelError("", "Combined thickness of books exceeds shelf width.");
-                    ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
-                    return View(book);
-                }
-
-                // Check if the book genre is allowed by the library
                 var library = await _context.Libraries
                     .FirstOrDefaultAsync(l => l.Genre == book.Genre);
 
@@ -111,7 +96,7 @@ namespace LibraryOrganizer.Controllers
                     ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
                     return View(book);
                 }
-                // Check if all books in a set are on the same shelf
+
                 if (book.IsPartOfSet)
                 {
                     var booksInSet = await _context.Books
@@ -126,24 +111,37 @@ namespace LibraryOrganizer.Controllers
                     }
                 }
 
-               // Add warning message if the book height is significantly smaller than the shelf height
+                // Add warning message if the book height is significantly smaller than the shelf height
                 if (book.Height + 10 <= shelf.Height)
                 {
                     ViewBag.WarningMessage = "The book is significantly shorter than the shelf by more than 10 cm. Are you sure you want to add it?";
+                    ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
+                    return View(book);
                 }
 
-                _context.Add(book);
-                await _context.SaveChangesAsync();
+                try
+                {
+                    shelf.AddBook(book);
+                    _context.Update(shelf);
+                    await _context.SaveChangesAsync();
+                }
+                catch (InvalidOperationException ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                    ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
+                    return View(book);
+                }
+
                 return RedirectToAction(nameof(Index));
             }
+
             ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
             return View(book);
         }
 
-    
 
-    // GET: Books/Edit/5
-    public async Task<IActionResult> Edit(int? id)
+        // GET: Books/Edit/5
+        public async Task<IActionResult> Edit(int? id)
         {
             if (id == null)
             {
@@ -160,8 +158,6 @@ namespace LibraryOrganizer.Controllers
         }
 
         // POST: Books/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(int id, [Bind("Id,Genre,Name,Height,Thickness,ShelfId,IsPartOfSet")] Book book)
@@ -235,125 +231,4 @@ namespace LibraryOrganizer.Controllers
         }
     }
 }
-
-
-
-//using System;
-//using System.Threading.Tasks;
-//using Microsoft.AspNetCore.Mvc;
-//using LibraryOrganizer.Interfaces;
-//using LibraryOrganizer.Models;
-//using Microsoft.EntityFrameworkCore;
-//using LibraryOrganizer.Data;
-
-//namespace LibraryOrganizer.Controllers
-//{
-//    public class BooksController : Controller
-//    {
-//        private readonly LibraryContext _context;
-//        private readonly ILibraryService _libraryService;
-
-//        public BooksController(LibraryContext context, ILibraryService libraryService)
-//        {
-//            _context = context;
-//            _libraryService = libraryService;
-//        }
-
-
-//        // GET: Books
-//        public async Task<IActionResult> Index()
-//        {
-//            var books = await _context.Books.Include(b => b.Shelf).ToListAsync();
-//            return View(books);
-//        }
-
-//    // GET: Books/Create
-//    public IActionResult Create()
-//        {
-//            return View();
-//        }
-
-//        // POST: Books/Create
-//        [HttpPost]
-//        [ValidateAntiForgeryToken]
-//        // POST: Books/Create
-//        [HttpPost]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> Create([Bind("Id,Genre,Name,Height,Thickness")] Book book)
-//        {
-//            if (ModelState.IsValid)
-//            {
-//                try
-//                {
-//                    // Validate genre here
-//                    if (book.Genre != "Janer") // Replace with your logic for allowed genres
-//                    {
-//                        ModelState.AddModelError("", "Only books of genre 'Janer' can be added.");
-//                        return View(book);
-//                    }
-
-//                    // Call the service to add the book to the library
-//                    await _libraryService.AddBookToLibraryAsync(book);
-//                    return RedirectToAction(nameof(Index));
-//                }
-//                catch (Exception ex)
-//                {
-//                    ModelState.AddModelError("", ex.Message);
-//                }
-//            }
-//            return View(book);
-//        }
-
-//        // GET: Books/Edit/5
-//        public async Task<IActionResult> Edit(int? id)
-//        {
-//            if (id == null)
-//            {
-//                return NotFound();
-//            }
-
-//            // Implement logic to get the book for editing
-//            return View(); // Placeholder
-//        }
-
-//        // POST: Books/Edit/5
-//        [HttpPost]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> Edit(int id, [Bind("Id,Genre,Name,Height,Thickness")] Book book)
-//        {
-//            if (id != book.Id)
-//            {
-//                return NotFound();
-//            }
-
-//            if (ModelState.IsValid)
-//            {
-//                // Implement logic to update the book
-//                return RedirectToAction(nameof(Index));
-//            }
-//            return View(book);
-//        }
-
-//        // GET: Books/Delete/5
-//        public async Task<IActionResult> Delete(int? id)
-//        {
-//            if (id == null)
-//            {
-//                return NotFound();
-//            }
-
-//            // Implement logic to get the book for deletion
-//            return View(); // Placeholder
-//        }
-
-//        // POST: Books/Delete/5
-//        [HttpPost, ActionName("Delete")]
-//        [ValidateAntiForgeryToken]
-//        public async Task<IActionResult> DeleteConfirmed(int id)
-//        {
-//            // Implement logic to delete the book
-//            return RedirectToAction(nameof(Index));
-//        }
-//    }
-//}
 

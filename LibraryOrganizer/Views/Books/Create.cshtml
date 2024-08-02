@@ -53,14 +53,6 @@
 </div>
 
 
-@if (this.ViewBag.WarningMessage != null)
-{
-    <div class="alert alert-warning">
-        @ViewBag.WarningMessage
-    </div>
-    
-        
-}
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
@@ -68,7 +60,7 @@
     @if (ViewBag.WarningMessage != null)
     {
         <script>
-            alert('@Html.Raw(ViewBag.WarningMessage)');
+            alert('@ViewBag.WarningMessage');
         </script>
     }
 }
