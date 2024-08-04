@@ -45,7 +45,7 @@ namespace LibraryOrganizer.Controllers
         public IActionResult Create()
         {
 
-          
+
 
             ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id");
             return View();
@@ -53,7 +53,7 @@ namespace LibraryOrganizer.Controllers
         // POST: Books/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Genre,Name,Height,Thickness,ShelfId,IsPartOfSet")] Book book)
+        public async Task<IActionResult> Create([Bind("Id,Genre,Name,Height,Thickness,ShelfId,IsPartOfSet, SetId")] Book book)
         {
             if (ModelState.IsValid)
             {
@@ -96,26 +96,22 @@ namespace LibraryOrganizer.Controllers
                     ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
                     return View(book);
                 }
-
                 if (book.IsPartOfSet)
                 {
-                    var booksInSet = await _context.Books
-                        .Where(b => b.IsPartOfSet && b.ShelfId == book.ShelfId)
-                        .ToListAsync();
-
-                    if (booksInSet.Any())
+                    if (!await HandleBooksInSetAsync(book, shelf))
                     {
-                        ModelState.AddModelError("", "Books in a set must be placed on the same shelf.");
                         ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
                         return View(book);
                     }
                 }
-
                 // Add warning message if the book height is significantly smaller than the shelf height
                 if (book.Height + 10 <= shelf.Height)
                 {
                     ViewBag.WarningMessage = "The book is significantly shorter than the shelf by more than 10 cm. Are you sure you want to add it?";
                     ViewData["ShelfId"] = new SelectList(_context.Shelves, "Id", "Id", book.ShelfId);
+                    shelf.AddBook(book);
+                    _context.Update(shelf);
+                    await _context.SaveChangesAsync();
                     return View(book);
                 }
 
@@ -229,6 +225,25 @@ namespace LibraryOrganizer.Controllers
         {
             return _context.Books.Any(e => e.Id == id);
         }
+
+
+        private async Task<bool> HandleBooksInSetAsync(Book book, Shelf shelf)
+        {
+          
+            var booksInSet = await _context.Books
+                .Where(b => b.SetId == book.SetId && b.Id != book.Id)
+                .ToListAsync();
+
+            if (booksInSet.Any(b => b.ShelfId != book.ShelfId))
+            {
+                ModelState.AddModelError("", "Books in a set must be placed on the same shelf.");
+                return false;
+            }
+
+            return true;
+        }
+
+
     }
 }
 

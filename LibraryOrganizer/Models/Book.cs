@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using LibraryOrganizer.Attributes;
 
 namespace LibraryOrganizer.Models
 {
@@ -27,6 +28,9 @@ namespace LibraryOrganizer.Models
 
         
         public Shelf? Shelf { get; set; }
+
+        [RequiredIfPartOfSet]
+        public int? SetId { get; set; }
         public bool IsPartOfSet { get; set; }
     }
 }

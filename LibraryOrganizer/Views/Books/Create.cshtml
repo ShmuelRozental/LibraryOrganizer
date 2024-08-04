@@ -41,6 +41,11 @@
                     <input class="form-check-input" asp-for="IsPartOfSet" /> @Html.DisplayNameFor(model => model.IsPartOfSet)
                 </label>
             </div>
+            <div class="form-group" id="SetIdContainer" style="display:none;">
+                <label asp-for="SetId" class="control-label"></label>
+                <input asp-for="SetId" class="form-control" name="SetId" />
+                <span asp-validation-for="SetId" class="text-danger"></span>
+            </div>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -57,6 +62,27 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        document.getElementById('IsPartOfSet').addEventListener('change', function () {
+            var setIdContainer = document.getElementById('SetIdContainer');
+            if (this.checked) {
+                setIdContainer.style.display = 'block';
+            } else {
+                setIdContainer.style.display = 'none';
+            }
+        });
+
+        window.onload = function () {
+            var isPartOfSet = document.getElementById('IsPartOfSet');
+            var setIdContainer = document.getElementById('SetIdContainer');
+            if (isPartOfSet.checked) {
+                setIdContainer.style.display = 'block';
+            } else {
+                setIdContainer.style.display = 'none';
+            }
+        }
+    </script>
     @if (ViewBag.WarningMessage != null)
     {
         <script>
